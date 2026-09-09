@@ -1,24 +1,75 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
+import { CtaBand } from "@/components/sections/CtaBand";
+import { FaqSection, faqs } from "@/components/sections/FaqSection";
+import { Features } from "@/components/sections/Features";
+import { Hero } from "@/components/sections/Hero";
+import { HowItWorks } from "@/components/sections/HowItWorks";
+import { Pricing } from "@/components/sections/Pricing";
+import { PrivacySection } from "@/components/sections/PrivacySection";
+import { ProblemSolution } from "@/components/sections/ProblemSolution";
+import { Showcase } from "@/components/sections/Showcase";
+import { UseCases } from "@/components/sections/UseCases";
+import { WhySnapCut } from "@/components/sections/WhySnapCut";
+
+const title = "SnapCut AI — AI Background Remover";
+const description =
+  "Remove image backgrounds instantly with SnapCut AI. Upload an image, let AI remove the background, and download a clean transparent image in seconds.";
+
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title },
+      { name: "description", content: description },
+      { property: "og:title", content: title },
+      { property: "og:description", content: description },
+      { property: "og:url", content: "/" },
+    ],
+    links: [{ rel: "canonical", href: "/" }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "SoftwareApplication",
+          name: "SnapCut AI",
+          applicationCategory: "MultimediaApplication",
+          operatingSystem: "Web",
+          description,
+          offers: { "@type": "Offer", price: "0", priceCurrency: "INR" },
+        }),
+      },
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: faqs.map((f) => ({
+            "@type": "Question",
+            name: f.q,
+            acceptedAnswer: { "@type": "Answer", text: f.a },
+          })),
+        }),
+      },
+    ],
+  }),
   component: Index,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
 function Index() {
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
+    <>
+      <Hero />
+      <ProblemSolution />
+      <HowItWorks />
+      <Features />
+      <Showcase />
+      <UseCases />
+      <WhySnapCut />
+      <Pricing />
+      <PrivacySection />
+      <FaqSection />
+      <CtaBand />
+    </>
   );
 }
