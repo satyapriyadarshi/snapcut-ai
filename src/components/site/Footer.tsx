@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Instagram, Linkedin } from "lucide-react";
+import { Instagram, Linkedin, Github } from "lucide-react";
 
 import logo from "@/assets/snapcut-logo.png.asset.json";
 
@@ -83,8 +83,53 @@ export function Footer() {
           </nav>
         ))}
       </div>
-      <div className="border-t border-border py-6 text-center text-xs text-muted-foreground">
-        © 2026 SnapCut AI. All rights reserved.
+      <div className="border-t border-border py-6">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
+            <div className="text-xs text-muted-foreground">
+              © 2026 SnapCut AI. All rights reserved.
+            </div>
+            <div className="flex flex-col items-center gap-3 sm:flex-row">
+              <div className="text-xs font-medium text-foreground">
+                Created by <span className="text-primary">Satya Priyadarshi</span>
+              </div>
+              <div className="flex gap-3">
+                <a
+                  href="https://www.linkedin.com/in/satya-priyadarshi-9851253b6/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Satya Priyadarshi on LinkedIn"
+                  className="inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-primary"
+                >
+                  <Linkedin className="h-3.5 w-3.5" aria-hidden="true" />
+                  LinkedIn
+                </a>
+                <span className="text-muted-foreground">•</span>
+                <a
+                  href="https://www.instagram.com/satya.priyadarshi87?stkn=OWxzcmN1cGV6OXVh"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Satya Priyadarshi on Instagram"
+                  className="inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-primary"
+                >
+                  <Instagram className="h-3.5 w-3.5" aria-hidden="true" />
+                  Instagram
+                </a>
+                <span className="text-muted-foreground">•</span>
+                <a
+                  href="https://github.com/satyapriyadarshi"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Satya Priyadarshi on GitHub"
+                  className="inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-primary"
+                >
+                  <Github className="h-3.5 w-3.5" aria-hidden="true" />
+                  GitHub
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </footer>
   );

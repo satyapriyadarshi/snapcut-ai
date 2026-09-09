@@ -29,6 +29,30 @@ export function validateImageFile(file: File): string | null {
   return null;
 }
 
+export function extractImageFromClipboard(
+  data: DataTransfer | ClipboardData | null,
+): File | null {
+  if (!data) return null;
+  const items = "items" in data ? data.items : undefined;
+  if (items) {
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item.kind === "file") {
+        const file = item.getAsFile();
+        if (file && ACCEPTED_TYPES.includes(file.type.toLowerCase())) return file;
+      }
+    }
+  }
+  const files = "files" in data ? data.files : undefined;
+  if (files && files.length > 0) {
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (file && ACCEPTED_TYPES.includes(file.type.toLowerCase())) return file;
+    }
+  }
+  return null;
+}
+
 export type ProgressHandler = (percent: number) => void;
 
 const endpoint = import.meta.env["VITE_BG_REMOVAL_ENDPOINT"] as string | undefined;

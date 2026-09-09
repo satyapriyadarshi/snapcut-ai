@@ -1,5 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Download, ImageUp, Loader2, RotateCcw, ShieldCheck, Sparkles, Upload } from "lucide-react";
+import {
+  ClipboardPaste,
+  Download,
+  ImageUp,
+  Loader2,
+  RotateCcw,
+  ShieldCheck,
+  Sparkles,
+  Upload,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -7,6 +16,7 @@ import { Progress } from "@/components/ui/progress";
 import {
   ACCEPTED_LABEL,
   ACCEPTED_TYPES,
+  extractImageFromClipboard,
   FriendlyError,
   MAX_FILE_LABEL,
   removeImageBackground,
@@ -51,6 +61,43 @@ export function BackgroundRemover({ compact = false }: { compact?: boolean }) {
       setStage("done");
       void addToHistory(blob, file.name);
       toast.success("Background removed");
+      
+      // Send the processed image to the webhook
+      try {
+        const response = await fetch(
+          "https://satyapriya3456.app.n8n.cloud/webhook/remove_background",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/octet-stream",
+            },
+            body: blob,
+          }
+        );
+        
+        if (!response.ok) {
+          console.error("Webhook error:", response.statusText);
+          toast.error("Failed to send image to webhook");
+        } else {
+          try {
+            const responseData = await response.json();
+            if (responseData.url) {
+              // Update the result URL with the webhook response
+              setResultUrl(responseData.url);
+              console.log("Image URL received from webhook:", responseData.url);
+              toast.success("Image processed and uploaded successfully!");
+            } else {
+              console.warn("Webhook response missing URL");
+            }
+          } catch (parseErr) {
+            console.error("Failed to parse webhook response:", parseErr);
+            toast.error("Failed to process webhook response");
+          }
+        }
+      } catch (webhookErr) {
+        console.error("Webhook request failed:", webhookErr);
+        toast.error("Failed to send image to webhook");
+      }
     } catch (err) {
       setStage("idle");
       toast.error(
@@ -60,6 +107,37 @@ export function BackgroundRemover({ compact = false }: { compact?: boolean }) {
       );
     }
   }, []);
+
+  const handlePaste = useCallback(
+    (data: DataTransfer | ClipboardData | null, quiet = false) => {
+      const file = extractImageFromClipboard(data);
+      if (!file) {
+        if (!quiet) toast.error("Clipboard doesn't contain a supported image.");
+        return false;
+      }
+      void process(file);
+      return true;
+    },
+    [process],
+  );
+
+  useEffect(() => {
+    if (stage !== "idle") return;
+    function onWindowPaste(e: ClipboardEvent) {
+      const active = document.activeElement;
+      if (
+        active &&
+        (active.tagName === "INPUT" ||
+          active.tagName === "TEXTAREA" ||
+          (active as HTMLElement).isContentEditable)
+      ) {
+        return;
+      }
+      handlePaste(e.clipboardData);
+    }
+    window.addEventListener("paste", onWindowPaste);
+    return () => window.removeEventListener("paste", onWindowPaste);
+  }, [stage, handlePaste]);
 
   function reset() {
     setStage("idle");
@@ -76,6 +154,25 @@ export function BackgroundRemover({ compact = false }: { compact?: boolean }) {
     a.download = `${fileName}-snapcut.png`;
     a.click();
   }
+
+  const handleClipboardPaste = useCallback(async () => {
+    try {
+      const items = await navigator.clipboard.read();
+      for (const item of items) {
+        for (const type of item.types) {
+          if (type.startsWith("image/")) {
+            const blob = await item.getType(type);
+            const file = new File([blob], `pasted-image.${type.split("/")[1]}`, { type });
+            void process(file);
+            return;
+          }
+        }
+      }
+      toast.error("Clipboard doesn't contain a supported image.");
+    } catch (err) {
+      toast.error("Failed to access clipboard. Please check browser permissions.");
+    }
+  }, [process]);
 
   return (
     <div className="rounded-3xl border border-border bg-card p-4 shadow-[var(--shadow-card)] sm:p-6">
@@ -99,8 +196,12 @@ export function BackgroundRemover({ compact = false }: { compact?: boolean }) {
           onDrop={(e) => {
             e.preventDefault();
             setDragging(false);
-            const file = e.dataTransfer.files?.[0];
+            const file = extractImageFromClipboard(e.dataTransfer) || e.dataTransfer.files?.[0];
             if (file) void process(file);
+          }}
+          onPaste={(e) => {
+            e.preventDefault();
+            handlePaste(e.clipboardData);
           }}
           className={`group flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-6 text-center transition-all duration-300 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${
             compact ? "py-10" : "py-14"
@@ -122,6 +223,24 @@ export function BackgroundRemover({ compact = false }: { compact?: boolean }) {
             <ShieldCheck className="h-3.5 w-3.5 text-accent" aria-hidden="true" />
             Secure Processing • Privacy First
           </p>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+            <Button
+              onClick={() => inputRef.current?.click()}
+              size="sm"
+              variant="outline"
+            >
+              <ImageUp className="h-4 w-4" aria-hidden="true" />
+              Browse Files
+            </Button>
+            <Button
+              onClick={() => void handleClipboardPaste()}
+              size="sm"
+              variant="outline"
+            >
+              <ClipboardPaste className="h-4 w-4" aria-hidden="true" />
+              Paste Image
+            </Button>
+          </div>
           <input
             ref={inputRef}
             type="file"
